@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:onesignal_flutter/onesignal_flutter.dart';
 import 'package:table_calendar/table_calendar.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../model/Exam.dart';
 import '../widgets/auth_gate.dart';
 import '../widgets/new_exam.dart';
@@ -75,7 +76,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
     );
   }
 
-  void _addNewExamToDatabase(String subject, DateTime date, TimeOfDay time) async {
+  void _addNewExamToDatabase(String subject, DateTime date, TimeOfDay time, GeoPoint location ) async {
     String topic = 'exams'; // Use a meaningful topic name
 
     FirebaseMessaging.instance.subscribeToTopic(topic);
@@ -107,21 +108,36 @@ class _CalendarScreenState extends State<CalendarScreen> {
       print("Error getting device state: $e");
     }
 
-    addExam(subject, date, time);
+    addExam(subject, date, time, location);
   }
 
-  Future<void> addExam(String subject, DateTime date, TimeOfDay time) async {
+  Future<void> addExam(String subject, DateTime date, TimeOfDay time, GeoPoint location) {
     User? user = FirebaseAuth.instance.currentUser;
-    DateTime newDate = DateTime(date.year, date.month, date.day, time.hour,
-        time.minute, 0, 0, 0);
+    DateTime newDate = DateTime(
+      date.year,
+      date.month,
+      date.day,
+      time.hour,
+      time.minute,
+      0,
+      0,
+      0,
+    );
     if (user != null) {
-      await FirebaseFirestore.instance.collection('exams').add({
+      return FirebaseFirestore.instance.collection('exams').add({
         'subject': subject,
         'date': newDate,
+        'location': location,
         'userId': user.uid,
       });
-      _loadExams();
     }
+
+    return FirebaseFirestore.instance.collection('exams').add({
+      'subject': subject,
+      'date': newDate,
+      'location': location,
+      'userId': 'invalid',
+    });
   }
 
   Future<void> _signOutAndNavigateToLogin(BuildContext context) async {
@@ -133,6 +149,18 @@ class _CalendarScreenState extends State<CalendarScreen> {
       );
     } catch (e) {
       print('Error during sign out: $e');
+    }
+  }
+
+  void _launchGoogleMaps(GeoPoint location) async {
+    final lat = location.latitude;
+    final long = location.longitude;
+    final url = 'https://www.google.com/maps/search/?api=1&query=$lat,$long';
+
+    if (await canLaunch(url)) {
+      await launch(url);
+    } else {
+      print('Could not launch $url');
     }
   }
 
@@ -276,7 +304,11 @@ class _CalendarScreenState extends State<CalendarScreen> {
     return GridView.builder(
       itemCount: currentMonthExams.length,
       itemBuilder: (context, index) {
-        return Card(
+        return GestureDetector(
+            onTap: () {
+          _launchGoogleMaps(currentMonthExams[index].location);
+        },
+        child: Card(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -300,6 +332,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
               )
             ],
           ),
+        )
         );
       },
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2),

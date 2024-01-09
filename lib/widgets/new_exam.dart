@@ -189,18 +189,6 @@ class _NewExamState extends State<NewExam> {
               ),
             ),
             ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                foregroundColor: Theme.of(context).textTheme.button?.color,
-                backgroundColor: Theme.of(context).secondaryHeaderColor,
-                fixedSize: const Size.fromWidth(500),
-              ),
-              onPressed: _submitData,
-              child: const Text(
-                'Add Exam Schedule',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-            ),
-            ElevatedButton(
               onPressed: _selectLocation,
               style: ElevatedButton.styleFrom(
                 primary: Theme.of(context).primaryColor,
@@ -212,6 +200,19 @@ class _NewExamState extends State<NewExam> {
                 style: TextStyle(fontWeight: FontWeight.bold),
               ),
             ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                foregroundColor: Theme.of(context).textTheme.button?.color,
+                backgroundColor: Theme.of(context).secondaryHeaderColor,
+                fixedSize: const Size.fromWidth(500),
+              ),
+              onPressed: _submitData,
+              child: const Text(
+                'Add Exam Schedule',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ),
+
           ],
         ),
       ),
