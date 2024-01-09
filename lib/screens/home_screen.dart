@@ -2,12 +2,14 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:lab3mis/screens/calendar_screen.dart';
 import 'package:lab3mis/widgets/auth_gate.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:onesignal_flutter/onesignal_flutter.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../model/Exam.dart';
 import '../widgets/new_exam.dart';
@@ -40,6 +42,23 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  Future<bool> _requestLocationService() async {
+    PermissionStatus status = await Permission.location.status;
+    if (status == PermissionStatus.denied) {
+      status = await Permission.location.request();
+      if (status != PermissionStatus.granted) {
+        // Handle the case where the user denied location permission
+        return false;
+      }
+    }
+
+    if (status == PermissionStatus.granted) {
+      return true;
+    }
+
+    return false;
+  }
+
   Future<void> _requestNotificationPermission() async {
     PermissionStatus status = await Permission.notification.request();
     if (status.isGranted) {
@@ -59,6 +78,7 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     initialize();
     _requestNotificationPermission();
+    _requestLocationService();
 
 
     OneSignal.shared.setAppId("657ac24e-e486-475b-85ab-925e4654ddfc");
@@ -136,7 +156,7 @@ class _HomeScreenState extends State<HomeScreen> {
         });
   }
 
-  void _addNewExamToDatabase(String subject, DateTime date, TimeOfDay time) async {
+  void _addNewExamToDatabase(String subject, DateTime date, TimeOfDay time, GeoPoint location ) async {
     String topic = 'exams'; // Use a meaningful topic name
 
     FirebaseMessaging.instance.subscribeToTopic(topic);
@@ -168,33 +188,36 @@ class _HomeScreenState extends State<HomeScreen> {
       print("Error getting device state: $e");
     }
 
-    addExam(subject, date, time);
+    addExam(subject, date, time, location);
   }
 
 
-  Future<void> addExam(String subject, DateTime date, TimeOfDay time) {
+  Future<void> addExam(String subject, DateTime date, TimeOfDay time, GeoPoint location) {
     User? user = FirebaseAuth.instance.currentUser;
     DateTime newDate = DateTime(
-        date.year,
-        date.month,
-        date.day,
-        time.hour,
-        time.minute,
-        0,
-        0,
-        0);
-    if(user!=null) {
+      date.year,
+      date.month,
+      date.day,
+      time.hour,
+      time.minute,
+      0,
+      0,
+      0,
+    );
+    if (user != null) {
       return FirebaseFirestore.instance.collection('exams').add({
         'subject': subject,
         'date': newDate,
-        'userId': user.uid
+        'location': location,
+        'userId': user.uid,
       });
     }
 
     return FirebaseFirestore.instance.collection('exams').add({
       'subject': subject,
       'date': newDate,
-      'userId': 'invalid'
+      'location': location,
+      'userId': 'invalid',
     });
   }
 
@@ -273,6 +296,19 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
 
+  void _launchGoogleMaps(GeoPoint location) async {
+    final lat = location.latitude;
+    final long = location.longitude;
+    final url = 'https://www.google.com/maps/search/?api=1&query=$lat,$long';
+
+    if (await canLaunch(url)) {
+      await launch(url);
+    } else {
+      print('Could not launch $url');
+    }
+  }
+
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -325,7 +361,11 @@ class _HomeScreenState extends State<HomeScreen> {
     return GridView.builder(
       itemCount: items.length,
       itemBuilder: (context, index) {
-        return Card(
+        return GestureDetector(
+            onTap: () {
+          _launchGoogleMaps(items[index].location);
+        },
+        child: Card(
           child: Stack(
             children: [
               Column(
@@ -368,6 +408,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ],
           ),
+        )
         );
       },
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
