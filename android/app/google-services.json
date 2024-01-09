@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "297347132785",
+    "firebase_url": "https://lab3-mis-f24c3-default-rtdb.europe-west1.firebasedatabase.app",
+    "project_id": "lab3-mis-f24c3",
+    "storage_bucket": "lab3-mis-f24c3.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:297347132785:android:a3e30acfbc8398fd2fdad0",
+        "android_client_info": {
+          "package_name": "com.example.lab3mis"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCMI0A0ciZqVWtyN8iVt0FBMTgs5L7wJd8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
