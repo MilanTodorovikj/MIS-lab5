@@ -25,7 +25,7 @@ class _SplashscreenState extends State<Splashscreen> {
     return Container(
       color: Colors.green[50],
       child: Center(
-        child: Text("Lab4-201083", style: TextStyle(
+        child: Text("Lab5-201083", style: TextStyle(
             color: Colors.greenAccent[700],
             fontSize: 36.0,
             fontWeight: FontWeight.w700,
